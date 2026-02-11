@@ -5,12 +5,12 @@ import glob
 from pathlib import Path
 
 file_name = sys.argv[1]
-file_name_1 = '../' + file_name + '/odd'
-file_name_2 = '../' + file_name + '/even'
-file_name_3 = '../' + file_name + '/odd/cropped'
-file_name_4 = '../' + file_name + '/even/cropped'
-file_name_5 = '../' + file_name + '/margin_added'
-file_name_6 = '../' + file_name + '/comp'
+file_name_1 = '../../' + file_name + '/odd'
+file_name_2 = '../../' + file_name + '/even'
+file_name_3 = '../../' + file_name + '/odd/cropped'
+file_name_4 = '../../' + file_name + '/even/cropped'
+file_name_5 = '../../' + file_name + '/margin_added'
+file_name_6 = '../../' + file_name + '/comp'
 
 def delete_jpg_files_basic(directory):
 
@@ -40,9 +40,9 @@ def move_to_archive():
     Move A.zip file and A folder to archive directory
     """
     # Define source and destination paths
-    source_file = Path(f"../{file_name}.zip")
-    source_folder = Path(f"../{file_name}")
-    archive_dir = Path("../archive")
+    source_file = Path(f"../../{file_name}.zip")
+    source_folder = Path(f"../../{file_name}")
+    archive_dir = Path("../../archive")
     
     try:
         # Create archive directory if it doesn't exist
