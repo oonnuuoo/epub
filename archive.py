@@ -34,6 +34,33 @@ def delete_jpg_files_basic(directory):
     print(f"Total .jpg files deleted: {deleted_count}")
 
 
+def get_available_destination(path: Path) -> Path:
+    """
+    既に同名のファイル / フォルダが存在する場合、
+    名前の末尾に (1), (2)... を付けた空きパスを探して返す。
+    - ファイル: `name.ext` -> `name (1).ext`
+    - フォルダ: `name` -> `name (1)`
+    """
+    parent = path.parent
+
+    # 拡張子がある場合はファイルとして扱い、拡張子の直前に (1) を付ける
+    if path.suffix:
+        base = path.stem
+        suffix = path.suffix
+    else:
+        base = path.name
+        suffix = ""
+
+    # name (1), name (2), ... のように空き名を探す
+    index = 1
+    while True:
+        new_name = f"{base} ({index}){suffix}"
+        candidate = parent / new_name
+        if not candidate.exists():
+            return candidate
+        index += 1
+
+
 
 def move_to_archive():
     """
@@ -51,16 +78,22 @@ def move_to_archive():
         # Move A.zip file if it exists
         if source_file.exists():
             destination_file = archive_dir / f"{file_name}.zip"
+            # 既に同名ファイルがある場合は "(1)" を付けてリネームして保存
+            if destination_file.exists():
+                destination_file = get_available_destination(destination_file)
             shutil.move(str(source_file), str(destination_file))
-            print(f"✓ ファイル '{source_file}' を '{destination_file}' に移動しました")
+            print(f"✓ ファイル '{source_file}' を '{destination_file}' に移動しました（既存があればリネーム）")
         else:
             print(f"⚠ ファイル '{source_file}' が見つかりません")
         
         # Move A folder if it exists
         if source_folder.exists() and source_folder.is_dir():
             destination_folder = archive_dir / file_name
+            # 既に同名フォルダがある場合は "(1)" を付けてリネームして保存
+            if destination_folder.exists():
+                destination_folder = get_available_destination(destination_folder)
             shutil.move(str(source_folder), str(destination_folder))
-            print(f"✓ フォルダ '{source_folder}' を '{destination_folder}' に移動しました")
+            print(f"✓ フォルダ '{source_folder}' を '{destination_folder}' に移動しました（既存があればリネーム）")
         else:
             print(f"⚠ フォルダ '{source_folder}' が見つかりません")
             
