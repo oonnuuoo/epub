@@ -70,6 +70,7 @@ def calculate_ratio(parent_folder_path, proportion, log_file_path=None):
  
     folder_path_odd = parent_folder_path + "/odd/cropped"
     folder_path_even = parent_folder_path + "/even/cropped"
+    # folder_path_even = parent_folder_path + "/even/cropped/resized"
 
     folder_odd = Path(folder_path_odd)
     files_odd = [f for f in os.listdir(folder_path_odd) if f.endswith('.jpg')]
@@ -399,6 +400,7 @@ def padding_branch(parent_folder_path, margin_pattern, target_ratio, log_file_pa
 
     folder_path_odd = parent_folder_path + "/odd/cropped"
     folder_path_even = parent_folder_path + "/even/cropped"
+    # folder_path_even = parent_folder_path + "/even/cropped/resized"
 
     # folder_path_odd = parent_folder_path + "/odd/cropped/resized/cropped"
     # folder_path_even = parent_folder_path + "/even/cropped/resized/cropped"
