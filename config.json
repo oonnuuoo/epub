@@ -1,0 +1,11 @@
+{
+    "input_directory": "./images",
+    "output_directory": "./cropped",
+    "settings": {
+        "threshold": 120,
+        "min_margin": 0,
+        "preserve_directory_structure": true,
+        "skip_existing_files": true,
+        "debug_mode": true
+    }
+}
