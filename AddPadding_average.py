@@ -144,12 +144,14 @@ def add_horizontal_padding_side(img, target_ratio, margin_direction):
         padding_height = new_height - height
         new_img = Image.new('RGB', (width, new_height), (255, 255, 255))
         new_img.paste(img, (0, 0))
+        print("a")
     else:
         # 下方寄せ
         new_height = int(width * target_ratio)
         padding_height = new_height - height
         new_img = Image.new('RGB', (width, new_height), (255, 255, 255))
         new_img.paste(img, (0, padding_height))
+        print("b")
     return new_img
 
 
@@ -172,7 +174,7 @@ def add_horizontal_padding_on_top_add_bottom(img, target_ratio):
     new_img.paste(img, (0, padding_height_top))
 
     return new_img
-
+    print("c")
 
 def add_vertical_padding_side(img, target_ratio, margin_direction):
     """
@@ -194,11 +196,13 @@ def add_vertical_padding_side(img, target_ratio, margin_direction):
         padding_width = new_width - width
         new_img = Image.new('RGB', (new_width, height), (255, 255, 255))
         new_img.paste(img, (padding_width, 0))
+        print("d")
     else:
         # 左方寄せ
         new_width = int(height / target_ratio)
         new_img = Image.new('RGB', (new_width, height), (255, 255, 255))
         new_img.paste(img, (0, 0))
+        print("e")
 
     return new_img
 
@@ -217,10 +221,10 @@ def add_vertical_padding_on_left_add_right(img, target_ratio):
     
     width, height = img.size
     new_width = int(height / target_ratio)
-    padding_width_left = (new_width - width) / 2
+    padding_width_left = int((new_width - width) / 2)
     new_img = Image.new('RGB', (new_width, height), (255, 255, 255))
     new_img.paste(img, (padding_width_left, 0))
-
+    print("f")
     return new_img
 
 
@@ -289,21 +293,26 @@ def padding(parent_folder_path, folder_path, margin_direction, target_ratio, log
 
     if margin_direction == 1 or margin_direction == 3:   # 横書き
         # 各画像にパディングを追加して保存
+        print("j")
         for img_file, img in processed_images:
             try:
                 width, height = img.size
                 current_ratio = height / width
 
                 # if current_ratio < target_ratio - 0.001:  # 浮動小数点の誤差を考慮 ratio = h / w
-                if height < target_ratio * width:
+                if height > target_ratio * width:
                     # 目標アスペクト比よりも横長の場合
                     img = add_horizontal_padding_side(img, target_ratio, margin_direction)
                     # img = add_horizontal_padding_side(img, target_ratio_plus, margin_direction)
+                    print(f"  現在のサイズ: {width}x{height} (比率: {current_ratio:.3f})")
+                    print("IF")
                     print(f"  新しいサイズ: {img.size[0]}x{img.size[1]} (比率: {target_ratio:.3f})")
                 else:
                     # 目標アスペクト比よりも縦長の場合
                     img = add_vertical_padding_on_left_add_right(img, target_ratio)
                     # img = add_vertical_padding_on_left_add_right(img, target_ratio_plus)
+                    print(f"  現在のサイズ: {width}x{height} (比率: {current_ratio:.3f})")
+                    print("ELSE")
                     print(f"  新しいサイズ: {img.size[0]}x{img.size[1]} (比率: {target_ratio:.3f})")
 
                 # 保存
@@ -326,22 +335,26 @@ def padding(parent_folder_path, folder_path, margin_direction, target_ratio, log
 
     else:   # 縦書き
         # 各画像にパディングを追加して保存
+        print("k")
         for img_file, img in processed_images:
+            print("g")
             try:
                 width, height = img.size
                 current_ratio = height / width
 
-                if current_ratio < target_ratio - 0.001:  # 浮動小数点の誤差を考慮
+                # if current_ratio < target_ratio - 0.001:  # 浮動小数点の誤差を考慮
+                if height < target_ratio * width:
                     # 縦書きにおいて横長の画像
-                    
+                    print("h")
                     # img = add_horizontal_padding_on_top_add_bottom(img, target_ratio)
                     # img = add_horizontal_padding_on_top_add_bottom(img, target_ratio_plus)
                     img = add_horizontal_padding_side(img, target_ratio, 1)  # 縦書きにおいて上部寄せ(目次ページなど想定)
                     print(f"  新しいサイズ: {img.size[0]}x{img.size[1]} (比率: {target_ratio:.3f})")
                 else:
                     # 縦書きにおいて縦長の画像
-                    
-                    img = add_vertical_padding_side(img, target_ratio, margin_direction)
+                    print("i")
+                    # img = add_vertical_padding_side(img, target_ratio, margin_direction)
+                    img = add_vertical_padding_on_left_add_right(img, target_ratio)
                     # img = add_vertical_padding_side(img, target_ratio_plus, margin_direction)
                     print(f"  新しいサイズ: {img.size[0]}x{img.size[1]} (比率: {target_ratio:.3f})")
                 # 保存
@@ -371,7 +384,7 @@ def padding(parent_folder_path, folder_path, margin_direction, target_ratio, log
 def get_padding_direction_config():
     """
      the direction in which padding is added
-
+    
     Returns:
         value margin_dirction from 1 to 4
     """
