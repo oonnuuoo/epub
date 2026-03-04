@@ -59,7 +59,8 @@ with open(filename, encoding='utf-8-sig', newline='') as input_file:
             return default
     lines = len(data)
     for i in range(lines-1):
-        num = str(data[i][0])                   # ページ通し番号
+
+        num = str(data[i][0]).zfill(4)          # ページ通し番号(4digits)
         index = str(data[i][2])                 # タイトル
         cur_h = safe_int(data[i][1], 0)         # currentのhierarchy
         next_h = safe_int(data[i+1][1], cur_h)  # next hierarchy
@@ -94,10 +95,10 @@ with open(filename, encoding='utf-8-sig', newline='') as input_file:
 
 
     for i in range(lines):
-        output_file2.write('<li><a href="xhtml/p-' + str(data[i][0]) + '.xhtml#pagenum_' + str(i) + '">' + str(data[i][3]) + '</a></li>\n')
+        output_file2.write('<li><a href="xhtml/p-' + str(data[i][0]).zfill(4) + '.xhtml#pagenum_' + str(i) + '">' + str(data[i][3]) + '</a></li>\n')
 
     for i in range(lines):
-        output_file3.write('<p class="indent-000' + str(safe_int(data[i][1], 0)) + '">\n<a href="p-' + str(data[i][0]) + '.xhtml">' + str(data[i][2]) + '</a></p>\n')
+        output_file3.write('<p class="indent-000' + str(safe_int(data[i][1], 0)) + '">\n<a href="p-' + str(data[i][0]).zfill(4) + '.xhtml">' + str(data[i][2]) + '</a></p>\n')
 
 output_file.close()
 output_file2.close()

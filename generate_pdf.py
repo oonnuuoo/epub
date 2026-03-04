@@ -2,6 +2,7 @@ import glob
 import os
 import sys
 import csv
+import fitz # PyMuPDF
 from fpdf import FPDF
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import (
@@ -26,6 +27,8 @@ input_csv = os.path.join(BASE_DIR, 'displacement.csv')
 COMP_DIR = os.path.join(BASE_DIR, 'comp')
 OUTPUT_PDF = os.path.join(BASE_DIR, 'output.pdf')
 TEMP_PDF = os.path.join(BASE_DIR, '_temp.pdf')
+index_csv = os.path.join(BASE_DIR, 'index.csv')
+output_pdf_index = os.path.join(BASE_DIR, 'output_index.pdf')
 
 # 1. Collect and sort images by name ascending
 images = sorted(glob.glob(os.path.join(COMP_DIR, "*.jpg")))
@@ -141,9 +144,42 @@ with open(input_csv, 'r', encoding='utf-8-sig') as f:
 
         print(f"  Link: {source_img_name} (p.{source_page_idx+1}) rect=({x},{y})-({x+w},{y+h}) -> {target_img_name} (p.{target_page_idx+1})")
 
+
+def add_hierarchical_outline_with_pymupdf(input_pdf_path, csv_path, output_pdf_path):
+    """
+    PyMuPDFを使用して階層構造を持つアウトラインをCSVから追加する
+    Parameters:
+    - input_pdf_path: 入力PDFファイルのパス
+    - csv_path: アウトライン情報を含むCSVファイルのパス
+               （1列目: ページ番号, 2列目: 階層レベル, 3列目: 見出し）
+    - output_pdf_path: 出力PDFファイルのパス
+    """
+    doc = fitz.open(input_pdf_path)
+    toc = []
+    with open(csv_path, 'r', encoding='utf-8-sig') as csvfile:
+        csv_reader = csv.reader(csvfile)
+        for row in csv_reader:
+            if len(row) >= 3:
+                try:
+                    page_num = int(row[0])
+                    level = int(row[1])
+                    heading = row[2]
+                    toc.append([level, heading, page_num])
+                except ValueError:
+                    print(f"  Warning: data parsing failed: {row}")
+                    continue
+    doc.set_toc(toc)
+    doc.save(output_pdf_path)
+    doc.close()
+    print(f"  Success: hierarchical outline added to PDF: {output_pdf_path}")
+    return True
+
 writer.write(OUTPUT_PDF)
 print(f"Output PDF created: {OUTPUT_PDF}")
 
+add_hierarchical_outline_with_pymupdf(OUTPUT_PDF, index_csv, output_pdf_index)
+print(f"Output Index PDF created: {output_pdf_index}")
+
 # Cleanup temp file
-os.remove(TEMP_PDF)
+# os.remove(TEMP_PDF)
 print("Done!")
