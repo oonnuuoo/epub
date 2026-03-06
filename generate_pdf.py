@@ -23,7 +23,8 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 BASE_DIR = os.path.abspath(sys.argv[1])
-input_csv = os.path.join(BASE_DIR, 'displacement.csv')
+img_path = os.path.join(BASE_DIR, 'comp')
+input_csv = os.path.join(BASE_DIR, 'ocr/output.csv')
 COMP_DIR = os.path.join(BASE_DIR, 'comp')
 OUTPUT_PDF = os.path.join(BASE_DIR, 'output.pdf')
 TEMP_PDF = os.path.join(BASE_DIR, '_temp.pdf')
@@ -77,11 +78,14 @@ with open(input_csv, 'r', encoding='utf-8-sig') as f:
             continue
 
         source_img_name = row[0]
-        x = int(row[1])
-        y = int(row[2])
-        w = int(row[3])
-        h = int(row[5])  # use actual height (column 5)
-        target_img_name = row[7]
+        img_size_width = int(row[1])
+        img_size_height = int(row[2])
+        x = int(row[3])
+        y = int(row[4])
+        w = int(row[5])
+        h = int(row[6])  # use actual height (column 5)
+        target_page_num = row[8]
+        target_img_name = target_page_num.zfill(3) + '.jpg'
 
         # Find source page index
         if source_img_name not in img_to_page:
