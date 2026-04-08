@@ -32,7 +32,7 @@ index_csv = os.path.join(BASE_DIR, 'index.csv')
 output_pdf_index = os.path.join(BASE_DIR, 'output_index.pdf')
 
 # 1. Collect and sort images by name ascending
-images = sorted(glob.glob(os.path.join(COMP_DIR, "*.jpg")))
+images = sorted(glob.glob(os.path.join(COMP_DIR, "*.png")))
 print(f"Found {len(images)} images")
 for img_path in images[:10]:
     print(f"  {os.path.basename(img_path)}")
@@ -68,7 +68,7 @@ for page in reader.pages:
     writer.add_page(page)
 
 # Read CSV and add link annotations
-# CSV columns: source_img, x, y, w, h(tentative), h, target_page_num, target_img
+# CSV columns: source_img, x, y, w, h(tentative), h, target_page_num(original), target_img(adjusted)
 with open(input_csv, 'r', encoding='utf-8-sig') as f:
     csv_reader = csv.reader(f)
     header = next(csv_reader)  # skip header row
@@ -84,8 +84,8 @@ with open(input_csv, 'r', encoding='utf-8-sig') as f:
         y = int(row[4])
         w = int(row[5])
         h = int(row[6])  # use actual height (column 5)
-        target_page_num = row[8]
-        target_img_name = target_page_num.zfill(3) + '.jpg'
+        target_page_num = row[8] #original(raw) page num
+        target_img_name = target_page_num.zfill(3) + '.png'
 
         # Find source page index
         if source_img_name not in img_to_page:
@@ -160,7 +160,7 @@ def add_hierarchical_outline_with_pymupdf(input_pdf_path, csv_path, output_pdf_p
     """
     doc = fitz.open(input_pdf_path)
     toc = []
-    with open(csv_path, 'r', encoding='utf-8-sig') as csvfile:
+    with open(csv_path, 'r', encoding='shift-jis') as csvfile:
         csv_reader = csv.reader(csvfile)
         for row in csv_reader:
             if len(row) >= 3:

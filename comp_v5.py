@@ -21,7 +21,7 @@ def compress_images(input_folder):
 
     # フォルダ内の全ての.jpgファイルを取得
     for filename in os.listdir(input_folder):
-        if filename.endswith('.jpg'):
+        if filename.endswith('.jpg') or filename.endswith('.png'):
             file_path = os.path.join(input_folder, filename)
             img = Image.open(file_path)
             
@@ -45,7 +45,7 @@ def compress_images_ex(input_folder):
 
     # フォルダ内の全ての.jpgファイルを取得
     for filename in os.listdir(input_folder):
-        if filename.endswith('.jpg'):
+        if filename.endswith('.jpg') or filename.endswith('.png'):
             file_path = os.path.join(input_folder, filename)
             img = Image.open(file_path)
             

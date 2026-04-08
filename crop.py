@@ -522,7 +522,7 @@ def process_images(folder_path, crop_margins, page_num_config, unify_aspect_rati
                     # 保存
                     output_path = output_folder / img_file.name
                     save_kwargs = {}
-                    if img_file.suffix.lower() in ('.jpg', '.jpeg'):
+                    if img_file.suffix.lower() in ('.jpg', '.jpeg', '.png'):
                         save_kwargs['quality'] = 95
                         save_kwargs['optimize'] = True
                     img.save(output_path, **save_kwargs)
@@ -594,7 +594,7 @@ def process_images(folder_path, crop_margins, page_num_config, unify_aspect_rati
                 # 保存
                 output_path = output_folder / img_file.name
                 save_kwargs = {}
-                if img_file.suffix.lower() in ('.jpg', '.jpeg'):
+                if img_file.suffix.lower() in ('.jpg', '.jpeg', '.png'):
                     save_kwargs['quality'] = 95
                     save_kwargs['optimize'] = True
                 img.save(output_path, **save_kwargs)

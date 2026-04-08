@@ -11,11 +11,12 @@ epub_file = '../../' + args[1] + '/' + args[1] + '.epub'
 zip_file = '../../' + args[1] + '/' + args[1] + '.zip'
 
 filename = '../../' + args[1] + '/index.csv'
+coods_file = '../../' + args[1] + '/ocr/output.csv'
 target = '../../' + args[1] + '/xhtml.txt'
-output_file = open('../../' + args[1] + '/xhtml.txt', 'w', encoding='utf-8-sig')
-output_file2 = open('../../' + args[1] + '/xhtml2.txt', 'w', encoding='utf-8-sig')
-output_file3 = open('../../' + args[1] + '/xhtml3.txt', 'w', encoding='utf-8-sig')
-
+output_file = open('../../' + args[1] + '/xhtml.txt', 'w', encoding='utf_8_sig')
+output_file2 = open('../../' + args[1] + '/xhtml2.txt', 'w', encoding='utf_8_sig')
+output_file3 = open('../../' + args[1] + '/xhtml3.txt', 'w', encoding='utf_8_sig')
+output_file4 = open('../../' + args[1] + '/xhtml4.txt', 'w', encoding='utf_8_sig')
 
 def unzip_zip_file(zip_file_path):
     # unzip zip file
@@ -30,7 +31,7 @@ os.rename(epub_file, zip_file)
 unzip_zip_file(zip_file)
 
 
-with open(filename, encoding='utf-8-sig', newline='') as input_file:
+with open(filename, encoding='utf_8_sig', newline='') as input_file:
     # reader = csv.reader(input_file)
     # for row in reader:
     #     num = str(row[0])
@@ -109,13 +110,13 @@ def modify_navigation_xhtml():
     xhtml_path = '../../' + args[1] + '/xhtml.txt'
     xhtml2_path = '../../' + args[1] + '/xhtml2.txt'
 
-    with open(nav_path, 'r', encoding='utf-8-sig') as f:
+    with open(nav_path, 'r', encoding='utf_8_sig') as f:
         content = f.read()
 
-    with open(xhtml_path, 'r', encoding='utf-8-sig') as f:
+    with open(xhtml_path, 'r', encoding='utf_8_sig') as f:
         xhtml_content = f.read()
 
-    with open(xhtml2_path, 'r', encoding='utf-8-sig') as f:
+    with open(xhtml2_path, 'r', encoding='utf_8_sig') as f:
         xhtml2_content = f.read()
 
     def find_nav_ol_range(text, nav_id):
@@ -183,7 +184,7 @@ def modify_navigation_xhtml():
         ol_start, ol_end = pl_range
         content = content[:ol_start] + '\n' + xhtml2_content + '\n' + content[ol_end:]
 
-    with open(nav_path, 'w', encoding='utf-8-sig') as f:
+    with open(nav_path, 'w', encoding='utf_8_sig') as f:
         f.write(content)
 
 modify_navigation_xhtml()
@@ -193,10 +194,10 @@ def modify_toc_xhtml():
     toc_path = '../../' + args[1] + '/' + args[1] + '/item/xhtml/p-0001.xhtml'
     xhtml3_path = '../../' + args[1] + '/xhtml3.txt'
 
-    with open(toc_path, 'r', encoding='utf-8-sig') as f:
+    with open(toc_path, 'r', encoding='utf_8_sig') as f:
         content = f.read()
 
-    with open(xhtml3_path, 'r', encoding='utf-8-sig') as f:
+    with open(xhtml3_path, 'r', encoding='utf_8_sig') as f:
         xhtml3_content = f.read()
 
     # Find the range covering all <p>...</p> elements and replace with xhtml3.txt
@@ -208,7 +209,7 @@ def modify_toc_xhtml():
     if first_p and last_p_end:
         content = content[:first_p.start()] + xhtml3_content + '\n' + content[last_p_end:]
 
-    with open(toc_path, 'w', encoding='utf-8-sig') as f:
+    with open(toc_path, 'w', encoding='utf_8_sig') as f:
         f.write(content)
 
 modify_toc_xhtml()
@@ -223,3 +224,41 @@ def replace_style_directory():
     shutil.copytree(src, dst)
 
 replace_style_directory()
+
+os.rename(zip_file, epub_file)
+
+with open(coods_file, 'r', encoding='utf_8_sig') as f:
+    # <a xlink:href="p-0004.xhtml">
+    #  <rect x="112" y="412" width="260" height="49" fill="#000000" fill-opacity="0" opacity="0" pointer-events="all"/>
+    # </a>
+    # x:row4 row y:row5 width:row6 height:row7 link: row10
+    
+    reader =csv.reader(f)
+    data = [line for line in reader]
+
+    lines = len(data)
+
+    img_name = data[0][0]
+    output_file4.write('for ' + img_name + ':\n\n\n')
+
+    for i in range(lines-1):
+        x = data[i][3]
+        y = data[i][4]
+        width = data[i][5]
+        height = data[i][6]
+        link =str(data[i][9]).zfill(4)
+
+        output_line = '<a xlink:href="p-' + link + '.xhtml">\n' + '<rect x="' + x + '" y="' + y + '" width="' + width + '" height="' + height + '" fill="#000000" fill-opacity="0" opacity="0" pointer-events="all"/>\n' + '</a>'
+        output_file4.write(output_line)
+
+        if data[i+1][0] != img_name:
+            img_name = data[i+1][0]
+            output_file4.write('\n\n\n' + 'for ' + img_name + ':\n\n\n')
+        
+        else:
+            output_file4.write('\n')
+
+    output_file4.write('<a xlink:href="p-' + str(data[len(data)-1][0]).zfill(4) + '.xhtml">\n' + '<rect x="' + str(data[len(data)-1][3]) + '" y="' + str(data[len(data)-1][4]) + '" width="' + str(data[len(data)-1][5]) + '" height="' + str(data[len(data)-1][6]) + '" fill="#000000" fill-opacity="0" opacity="0" pointer-events="all"/>\n' + '</a>')
+
+output_file4.close()
+

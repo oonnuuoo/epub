@@ -49,6 +49,11 @@ def parse_xml(input_xml):
     #         print("skip")
         pattern1 = r'IMAGENAME="(?P<IMAGENAME>[^"]+)"\s+WIDTH="(?P<IMGWIDTH>\d+)"\s+HEIGHT="(?P<IMGHEIGHT>\d+)"'
         pattern2 = r'X="(?P<X>\d+)"\s+Y="(?P<Y>\d+)"\s+WIDTH="(?P<WIDTH>\d+)"\s+HEIGHT="(?P<HEIGHT>\d+)".*?STRING="(?P<STRING>[^"]*)"'
+
+# patterns for processing string
+        str_pattern1 = r'"…"{3,}'
+
+
         for line in input_file:
             line = line.replace(',', '')
             match1 = re.search(pattern1, line)
@@ -70,6 +75,8 @@ def parse_xml(input_xml):
                     page_num = match3.group(0)
                 else:
                     page_num = "0"
+
+
 
                 print(x, y, width, height, string, page_num)
                 output_file.write(img_name + ',' + img_width + ',' + img_height + ',' + x + ',' + y + ',' + width + ',' + height + ',' + string + ',' + page_num + '\n')

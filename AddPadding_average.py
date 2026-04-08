@@ -73,10 +73,10 @@ def calculate_ratio(parent_folder_path, proportion, log_file_path=None):
     # folder_path_even = parent_folder_path + "/even/cropped/resized"
 
     folder_odd = Path(folder_path_odd)
-    files_odd = [f for f in os.listdir(folder_path_odd) if f.endswith('.jpg')]
+    files_odd = [f for f in os.listdir(folder_path_odd) if f.endswith('.jpg') or f.endswith('.png')]
 
     folder_even = Path(folder_path_even)
-    files_even = [f for f in os.listdir(folder_path_even) if f.endswith('.jpg')]
+    files_even = [f for f in os.listdir(folder_path_even) if f.endswith('.jpg') or f.endswith('.png')]
 
     aspect_ratios_odd = []
     aspect_ratios_even = []
@@ -97,21 +97,23 @@ def calculate_ratio(parent_folder_path, proportion, log_file_path=None):
 
 
     # omit minimum and maximum quartiles
-    aspect_ratios.sort()
+    aspect_ratios.sort() # 昇順にソート
     length = len(aspect_ratios)
     print(length)
-    start = int(length*(100-proportion)/100/2)
-    end = int(length-length*(100-proportion)/100/2)
+    start = int(length*(100-proportion)/100/2) # 下位
+    end = int(length-length*(100-proportion)/100/2) # 上位
     print(start, end)
 
     aspect_ratios = aspect_ratios[start : end]
 
     # calculate average ratio
     target_ratio = sum(aspect_ratios) / len(aspect_ratios)
+
     
     # Log ratio calculation results
     if log_file_path:
         write_log(log_file_path, "RATIO CALCULATION:")
+        write_log(log_file_path, f"  aspect_ratios {aspect_ratios}")
         write_log(log_file_path, f"  Total images found: {length}")
         write_log(log_file_path, f"  Odd page images: {len(files_odd)}")
         write_log(log_file_path, f"  Even page images: {len(files_even)}")
@@ -123,109 +125,213 @@ def calculate_ratio(parent_folder_path, proportion, log_file_path=None):
     return target_ratio
 
 
-def add_horizontal_padding_side(img, target_ratio, margin_direction):
+def add_horizontal_padding(img, target_ratio, mode, log_file_path=None):
     """
-    add white padding on top(margin_direction = 1) or bottom side(margin_direction = 3)
-
+    add horizontalwhite padding to the image
+    mode "U": content on upper side, padding on bottom side
+    mode "B": content on bottom side, padding on upper side
+    mode "M": content on middle, padding on both side
+    
     Args:
         img: PIL Image Object
         target_ratio: objective height/width ratio
-        margin_direction: 1 for top-aligned (padding on bottom), 3 for bottom-aligned (padding on top)
+        mode: place of content ("U", "B", "M")
     
     Returns:
         PIL Image with padding added
+
     """
-    
-    
+
     width, height = img.size
-    if margin_direction == 1:
+    new_height = int(width * target_ratio) # ratio = h / w
+
+    if mode == "U":
         # 上方寄せ
-        new_height = int(width * target_ratio) # ratio = h / w
         padding_height = new_height - height
         new_img = Image.new('RGB', (width, new_height), (255, 255, 255))
         new_img.paste(img, (0, 0))
-        print("a")
-    else:
+        print("HORIZONTAL -> mode U")
+    
+    elif mode == "B":
         # 下方寄せ
-        new_height = int(width * target_ratio)
         padding_height = new_height - height
         new_img = Image.new('RGB', (width, new_height), (255, 255, 255))
         new_img.paste(img, (0, padding_height))
-        print("b")
+        print("HORIZONTAL -> mode B")
+
+    elif mode == "M":
+        # 中央
+        padding_height_half = int((new_height - height) / 2)
+        new_img = Image.new('RGB', (width, new_height), (255, 255, 255))
+        new_img.paste(img, (0, padding_height_half))
+        print("HORIZONTAL -> mode M")
+
+    else:
+        print("ERROR: Invalid mode selected, in HORIZONTAL branch")
+        if log_file_path:
+            write_log(log_file_path, "ERROR: Invalid margin direction selected, in HORIZONTAL branch")
+        return
+    
     return new_img
 
 
-def add_horizontal_padding_on_top_add_bottom(img, target_ratio):
+def add_vertical_padding(img, target_ratio, mode, log_file_path=None):
     """
-    add white padding on both top and bottom side
-    縦書き文章内の横長の画像を想定
+    add vertical white padding to Portrait aspect image
+    mode "L": content on LEFT, padding on RIGHT
+    mode "R": content on RIGHT, padding on LEFT
+    mode "M": content in the middle, padding on both side
 
     Args:
         img: PIL Image Object
         target_ratio: objective height/width ratio
+        mode: place of content ("L", "R", "M")
 
     Returns:
         PIL Image with padding added
     """
-    width, height = img.size
-    new_height = int(width * target_ratio)
-    padding_height_top = int((new_height - height) / 2)
-    new_img = Image.new('RGB', (width, new_height), (255, 255, 255))
-    new_img.paste(img, (0, padding_height_top))
-
-    return new_img
-    print("c")
-
-def add_vertical_padding_side(img, target_ratio, margin_direction):
-    """
-    add white padding on left(margin_direction = 2) or right side(margin_direction = 4)
-
-    Args:
-        img: PIL Image Object
-        target_ratio: objective width/height ratio
-        margin_direction: 2 for left-aligned (padding on right), 4 for right-aligned (padding on left)
-
-    Returns:
-        PIL Image with padding 
-    """
 
     width, height = img.size
-    if margin_direction == 2:
-        # 右方寄せ
-        new_width = int(height / target_ratio) # ratio=height/width
+    new_width = int(height / target_ratio) # ratio = h / w, 
+
+    if mode == "L":
+        # 左寄せ
         padding_width = new_width - width
         new_img = Image.new('RGB', (new_width, height), (255, 255, 255))
-        new_img.paste(img, (padding_width, 0))
-        print("d")
-    else:
-        # 左方寄せ
-        new_width = int(height / target_ratio)
-        new_img = Image.new('RGB', (new_width, height), (255, 255, 255))
         new_img.paste(img, (0, 0))
-        print("e")
+        print("VERTICAL -> mode L")
 
-    return new_img
+    elif mode == "R":
+        # 右寄せ
+        padding_width = new_width - width
+        new_img = Img.new('RGB', (new_width, height), (255, 255, 255))
+        new_img.paste(img, (padding_width, 0))
+        print("VERTICAL -> R")
 
-def add_vertical_padding_on_left_add_right(img, target_ratio):
-    """
-    add white padding on both left and right side
-    横書き文章内の縦長の画像を想定
+    elif mode == "M":
+        # 中央配置
+        padding_width_half = int((new_width - width) / 2)
+        new_img = Image.new('RGB', (new_width, height), (255, 255, 255))
+        new_img.paste(img, (padding_width_half, 0))
+        print("VERTICAL -> mode M")
 
-    Args:
-        img: PIL Image Object
-        target_ratio: objective width/height ratio
-
-    Returns:
-        PIL Image with padding added
-    """
+    else:
+        print("ERROR: Invalid mode selected, in VERTICAL branch")
+        if log_file_path:
+            write_log(log_file_path, "ERROR: Invalid margin direction selected, in VERTICAL branch")
+        return
     
-    width, height = img.size
-    new_width = int(height / target_ratio)
-    padding_width_left = int((new_width - width) / 2)
-    new_img = Image.new('RGB', (new_width, height), (255, 255, 255))
-    new_img.paste(img, (padding_width_left, 0))
-    print("f")
     return new_img
+
+
+# def add_horizontal_padding_side(img, target_ratio, margin_direction):
+#     """
+#     add white padding on top(margin_direction = 1) or bottom side(margin_direction = 3)
+
+#     Args:
+#         img: PIL Image Object
+#         target_ratio: objective height/width ratio
+#         margin_direction: 1 for top-aligned (padding on bottom), 3 for bottom-aligned (padding on top)
+    
+#     Returns:
+#         PIL Image with padding added
+#     """
+    
+    
+#     width, height = img.size
+#     if margin_direction == "1":
+#         # 上方寄せ
+#         new_height = int(width * target_ratio) # ratio = h / w
+#         padding_height = new_height - height
+#         new_img = Image.new('RGB', (width, new_height), (255, 255, 255))
+#         new_img.paste(img, (0, 0))
+#         print("a")
+#     elif margin_direction == "3":
+#         # 下方寄せ
+#         new_height = int(width * target_ratio)
+#         padding_height = new_height - height
+#         new_img = Image.new('RGB', (width, new_height), (255, 255, 255))
+#         new_img.paste(img, (0, padding_height))
+#         print("b")
+#     else:
+#         print("Invalid margin direction")
+#         if log_file_path:
+#             write_log(log_file_path, "ERROR: Invalid margin direction selected")
+#         return
+#     return new_img
+
+
+# def add_horizontal_padding_on_top_add_bottom(img, target_ratio):
+#     """
+#     add white padding on both top and bottom side
+#     縦書き文章内の横長の画像を想定
+
+#     Args:
+#         img: PIL Image Object
+#         target_ratio: objective height/width ratio
+
+#     Returns:
+#         PIL Image with padding added
+#     """
+#     width, height = img.size
+#     new_height = int(width * target_ratio)
+#     padding_height_top = int((new_height - height) / 2)
+#     new_img = Image.new('RGB', (width, new_height), (255, 255, 255))
+#     new_img.paste(img, (0, padding_height_top))
+
+#     return new_img
+#     print("c")
+
+# def add_vertical_padding_side(img, target_ratio, margin_direction):
+#     """
+#     add white padding on left(margin_direction = 2) or right side(margin_direction = 4)
+
+#     Args:
+#         img: PIL Image Object
+#         target_ratio: objective width/height ratio
+#         margin_direction: 2 for left-aligned (padding on right), 4 for right-aligned (padding on left)
+
+#     Returns:
+#         PIL Image with padding 
+#     """
+
+#     width, height = img.size
+#     if margin_direction == 2:
+#         # 右方寄せ
+#         new_width = int(height / target_ratio) # ratio=height/width
+#         padding_width = new_width - width
+#         new_img = Image.new('RGB', (new_width, height), (255, 255, 255))
+#         new_img.paste(img, (padding_width, 0))
+#         print("d")
+#     else:
+#         # 左方寄せ
+#         new_width = int(height / target_ratio)
+#         new_img = Image.new('RGB', (new_width, height), (255, 255, 255))
+#         new_img.paste(img, (0, 0))
+#         print("e")
+
+#     return new_img
+
+# def add_vertical_padding_on_left_add_right(img, target_ratio):
+#     """
+#     add white padding on both left and right side
+#     横書き文章内の縦長の画像を想定
+
+#     Args:
+#         img: PIL Image Object
+#         target_ratio: objective width/height ratio
+
+#     Returns:
+#         PIL Image with padding added
+#     """
+    
+#     width, height = img.size
+#     new_width = int(height / target_ratio)
+#     padding_width_left = int((new_width - width) / 2)
+#     new_img = Image.new('RGB', (new_width, height), (255, 255, 255))
+#     new_img.paste(img, (padding_width_left, 0))
+#     print("f")
+#     return new_img
 
 
 def padding(parent_folder_path, folder_path, margin_direction, target_ratio, log_file_path=None):
@@ -291,34 +397,41 @@ def padding(parent_folder_path, folder_path, margin_direction, target_ratio, log
     # Convert margin_direction to int for comparison
     # margin_direction = int(margin_direction)
 
-    if margin_direction == 1 or margin_direction == 3:   # 横書き
+    if margin_direction == "1" or margin_direction == "3":   # 横書き
         # 各画像にパディングを追加して保存
-        print("j")
+        print("margin_direction = 1 or 3")
         for img_file, img in processed_images:
             try:
                 width, height = img.size
-                current_ratio = height / width
+                
+                # ratio = h / w
+                if height < target_ratio * width:
+                    # 目標アスペクト比よりも横長の場合 : 上方寄せ
+                    if margin_direction == "1":
+                        print("margin_direction 1 -> LANDSCAPE")
+                        img = add_horizontal_padding(img, target_ratio, "U", log_file_path)
+                    
+                    elif margin_direction == "3":
+                        print("margin_direction 3 -> LANDSCAPE")
+                        img = add_horizontal_padding(img, target_ratio, "B", log_file_path)
+                    
+                    else:
+                        print("ERROR at PADDING() inner branch neither 1 nor 3")
 
-                # if current_ratio < target_ratio - 0.001:  # 浮動小数点の誤差を考慮 ratio = h / w
-                if height > target_ratio * width:
-                    # 目標アスペクト比よりも横長の場合
-                    img = add_horizontal_padding_side(img, target_ratio, margin_direction)
-                    # img = add_horizontal_padding_side(img, target_ratio_plus, margin_direction)
-                    print(f"  現在のサイズ: {width}x{height} (比率: {current_ratio:.3f})")
+                    print(f"  現在のサイズ: {width}x{height} ")
                     print("IF")
                     print(f"  新しいサイズ: {img.size[0]}x{img.size[1]} (比率: {target_ratio:.3f})")
                 else:
-                    # 目標アスペクト比よりも縦長の場合
-                    img = add_vertical_padding_on_left_add_right(img, target_ratio)
-                    # img = add_vertical_padding_on_left_add_right(img, target_ratio_plus)
-                    print(f"  現在のサイズ: {width}x{height} (比率: {current_ratio:.3f})")
+                    # 目標アスペクト比よりも縦長の場合 : 中央配置
+                    img = add_vertical_padding(img, target_ratio, "M", log_file_path)
+                    print(f"  現在のサイズ: {width}x{height} ")
                     print("ELSE")
                     print(f"  新しいサイズ: {img.size[0]}x{img.size[1]} (比率: {target_ratio:.3f})")
 
                 # 保存
                 output_path = output_folder / img_file.name
                 save_kwargs = {}
-                if img_file.suffix.lower() in ('.jpg', '.jpeg'):
+                if img_file.suffix.lower() in ('.jpg', '.jpeg', '.png'):
                     save_kwargs['quality'] = 95
                     save_kwargs['optimize'] = True
                 img.save(output_path, **save_kwargs)
@@ -327,40 +440,44 @@ def padding(parent_folder_path, folder_path, margin_direction, target_ratio, log
                 print()
 
             except Exception as e:
-                print(f"  → エラー: {img_file.name} - {str(e)}")
+                print(f"  → エラー: {img_file.name} - {str(e)} at padding branch 1")
                 error_count += 1
                 if log_file_path:
-                    write_log(log_file_path, f"  ERROR processing: {img_file.name} - {str(e)}")
+                    write_log(log_file_path, f"  ERROR processing: {img_file.name} - {str(e)} at padding branch 1")
                 print()
 
-    else:   # 縦書き
+    elif margin_direction == "2" or margin_direction == "4":   # 右/左上寄せ
         # 各画像にパディングを追加して保存
-        print("k")
+        print("margin_direction = 2(右上寄せ) or 4(左上寄せ)")
         for img_file, img in processed_images:
-            print("g")
             try:
                 width, height = img.size
-                current_ratio = height / width
-
-                # if current_ratio < target_ratio - 0.001:  # 浮動小数点の誤差を考慮
+                
                 if height < target_ratio * width:
-                    # 縦書きにおいて横長の画像
-                    print("h")
+                    # 縦書きにおいて横長の画像 : 上方寄せ
+                    print("margin_direction 2 or 4 -> LANDSCAPE")
                     # img = add_horizontal_padding_on_top_add_bottom(img, target_ratio)
                     # img = add_horizontal_padding_on_top_add_bottom(img, target_ratio_plus)
-                    img = add_horizontal_padding_side(img, target_ratio, 1)  # 縦書きにおいて上部寄せ(目次ページなど想定)
+                    # img = add_horizontal_padding_side(img, target_ratio, "1")  # 縦書きにおいて上部寄せ(目次ページなど想定)
+                    img = add_horizontal_padding(img, target_ratio, "U", log_file_path)
                     print(f"  新しいサイズ: {img.size[0]}x{img.size[1]} (比率: {target_ratio:.3f})")
                 else:
-                    # 縦書きにおいて縦長の画像
-                    print("i")
-                    # img = add_vertical_padding_side(img, target_ratio, margin_direction)
-                    img = add_vertical_padding_on_left_add_right(img, target_ratio)
+                    if margin_direction == "2":
+                        # 縦書きにおいて縦長の画像 : 右寄せ
+                        print("margin_direction 2 -> PORTRAIT")
+                        img = add_vertical_padding(img, target_ratio, "R", log_file_path)
+                    elif margin_direction == "4":
+                        print("margin_direction 4 -> PORTRAIT")
+                        img = add_vertical_padding(img, target_ratio, "L", log_file_path)
+                    
+                    else:
+                        print("ERROR at PADDING() inner branch neither 2 nor 4")
                     # img = add_vertical_padding_side(img, target_ratio_plus, margin_direction)
                     print(f"  新しいサイズ: {img.size[0]}x{img.size[1]} (比率: {target_ratio:.3f})")
                 # 保存
                 output_path = output_folder / img_file.name
                 save_kwargs = {}
-                if img_file.suffix.lower() in ('.jpg', '.jpeg'):
+                if img_file.suffix.lower() in ('.jpg', '.jpeg', '.png'):
                     save_kwargs['quality'] = 95
                     save_kwargs['optimize'] = True
                 img.save(output_path, **save_kwargs)
@@ -369,11 +486,57 @@ def padding(parent_folder_path, folder_path, margin_direction, target_ratio, log
                 print()
 
             except Exception as e:
-                print(f"  → エラー: {img_file.name} - {str(e)}")
+                print(f"  → エラー: {img_file.name} - {str(e)} at padding branch 2 or 4")
                 error_count += 1
                 if log_file_path:
-                    write_log(log_file_path, f"  ERROR processing: {img_file.name} - {str(e)}")
+                    write_log(log_file_path, f"  ERROR processing: {img_file.name} - {str(e)} at padding branch 2")
                 print()
+
+    elif margin_direction == "5":
+        # 全ページ右下寄せ
+        print("margin_direction = 5(全ページ右下寄せ)")
+        for img_file, img in processed_images:
+            try:
+                width, height = img.size
+                
+                if height < target_ratio * width:
+                    # 横長の画像 : 下方寄せ
+                    print("margin_direction 5 -> LANDSCAPE")
+                    
+                    img = add_horizontal_padding(img, target_ratio, "B", log_file_path)
+                    print(f"  新しいサイズ: {img.size[0]}x{img.size[1]} (比率: {target_ratio:.3f})")
+                else:
+                    # 縦書きにおいて縦長の画像
+                    print("margin_direction 5 -> PORTRAIT")
+                    # img = add_vertical_padding_side(img, target_ratio, margin_direction)
+                    img = add_vertical_padding(img, target_ratio, "R", log_file_path)
+                    # img = add_vertical_padding_side(img, target_ratio_plus, margin_direction)
+                    print(f"  新しいサイズ: {img.size[0]}x{img.size[1]} (比率: {target_ratio:.3f})")
+                # 保存
+                output_path = output_folder / img_file.name
+                save_kwargs = {}
+                if img_file.suffix.lower() in ('.jpg', '.jpeg', '.png'):
+                    save_kwargs['quality'] = 95
+                    save_kwargs['optimize'] = True
+                img.save(output_path, **save_kwargs)
+                processed_count += 1
+                print(f"  → 保存完了: {output_path}")
+                print()
+
+            except Exception as e:
+                print(f"  → エラー: {img_file.name} - {str(e)} at padding branch 5")
+                error_count += 1
+                if log_file_path:
+                    write_log(log_file_path, f"  ERROR processing: {img_file.name} - {str(e)} at padding branch 5")
+                print()
+            
+
+    else:
+        print("Invalid margin_direction at PADDING")
+        if log_file_path:
+            write_log(log_file_path, "ERROR: Invalid margin direction selected")
+        return
+
 
     print(f"\n処理完了: {processed_count}個の画像を処理しました")
     if log_file_path:
@@ -386,7 +549,7 @@ def get_padding_direction_config():
      the direction in which padding is added
     
     Returns:
-        value margin_dirction from 1 to 4
+        value margin_direction from 1 to 4
     """
 
     print("\n　余白を追加する位置を選択")
@@ -405,7 +568,10 @@ def get_margin_pattern_config():
     print("\n cf.) 全ページ上方寄せ（下方に余白を追加)                         :  1")
     print("\n      奇数ページ右方寄せ, 偶数ページ左寄せ(見開き左側に奇数ページ)  :  2")
     print("\n      奇数ページ左方寄せ, 偶数ページ右寄せ(見開き左側に奇数ページ)  :  3")
-    value = input("\n input value between 1 and 3  :  ").strip().lower()
+    print("\n      全ページ右寄せ                                            :  4")
+    print("\n      全ページ右下寄せ                                          :  5")
+    print("\n      全ページ下方寄せ                                          :  6")
+    value = input("\n input value between 1 and 6  :  ").strip().lower()
 
     return(value)
 
@@ -414,6 +580,7 @@ def padding_branch(parent_folder_path, margin_pattern, target_ratio, log_file_pa
     folder_path_odd = parent_folder_path + "/odd/cropped"
     folder_path_even = parent_folder_path + "/even/cropped"
     # folder_path_even = parent_folder_path + "/even/cropped/resized"
+    # folder_path_odd = parent_folder_path + "/odd/cropped/resized"
 
     # folder_path_odd = parent_folder_path + "/odd/cropped/resized/cropped"
     # folder_path_even = parent_folder_path + "/even/cropped/resized/cropped"
@@ -444,6 +611,25 @@ def padding_branch(parent_folder_path, margin_pattern, target_ratio, log_file_pa
         padding(parent_folder_path, folder_path_odd_sub, "4", target_ratio, log_file_path)
         padding(parent_folder_path, folder_path_even_sub, "2", target_ratio, log_file_path)
 
+    elif margin_pattern == "4":
+        # 横書き, 全ページ右寄せ
+        padding(parent_folder_path, folder_path_odd, "2", target_ratio, log_file_path)
+        padding(parent_folder_path, folder_path_even, "2", target_ratio, log_file_path)
+        padding(parent_folder_path, folder_path_odd_sub, "2", target_ratio, log_file_path)
+        padding(parent_folder_path, folder_path_even_sub, "2", target_ratio, log_file_path)
+
+    elif margin_pattern == "5":
+        # 縦書き, 全ページ右下寄せ
+        padding(parent_folder_path, folder_path_odd, "5", target_ratio, log_file_path)
+        padding(parent_folder_path, folder_path_even, "5", target_ratio, log_file_path)
+        padding(parent_folder_path, folder_path_odd_sub, "5", target_ratio, log_file_path)
+        padding(parent_folder_path, folder_path_even_sub, "5", target_ratio, log_file_path)
+
+    elif margin_pattern == "6":
+        padding(parent_folder_path, folder_path_odd, "3", target_ratio, log_file_path)
+        padding(parent_folder_path, folder_path_even, "3", target_ratio, log_file_path)
+        padding(parent_folder_path, folder_path_odd_sub, "3", target_ratio, log_file_path)
+        padding(parent_folder_path, folder_path_even_sub, "3", target_ratio, log_file_path)
 
     else:
         print("Invalid margin pattern")
